@@ -11,14 +11,29 @@ datasource db {
 }
 
 model Customer {
-  id Int @id @default(autoincrement())
-  secureId  String @default(uuid()) @map("secure_id")
-  cpf String @unique
-  balance Float @map("current_balance")
-  status String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                Int        @id @default(autoincrement())
+  secureId          String     @default(uuid()) @map("secure_id")
+  cpf               String     @unique
+  balance           Float      @map("current_balance")
+  status            String
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  transfersMade     Transfer[] @relation(name: "TransfersMade")
+  transfersReceived Transfer[] @relation(name: "TransfersReceived")
 
   @@map("customers")
 }
 
+model Transfer {
+  id          String   @id @default(uuid())
+  sender      Customer @relation(name: "TransfersMade", fields: [sender_id], references: [id])
+  receiver    Customer @relation(name: "TransfersReceived", fields: [receiver_id], references: [id])
+  sender_id   Int
+  receiver_id Int
+  amount      Float
+  message     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("transfers")
+}

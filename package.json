@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "npx ts-node-dev --respawn --transpile-only ./src/index.ts",
     "build": "npx tsc -b",
-    "start": "node index.js"
+    "start": "node index.js",
+    "testDev": "npx ts-node-dev --transpile-only ./src/testQueries.ts"
   },
   "author": "Luis Coelho",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
+    "@prisma/client": "^4.3.1",
     "dotenv": "^16.0.2",
     "express": "^4.18.1"
   }

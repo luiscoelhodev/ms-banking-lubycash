@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx ts-node-dev --respawn --transpile-only ./src/index.ts",
+    "dev": "npx tsx watch src/index.ts",
+    "testDev": "npx tsx watch ./src/testQueries.ts",
     "build": "npx tsc -b",
-    "start": "node index.js",
-    "testDev": "npx ts-node-dev --transpile-only ./src/testQueries.ts"
+    "start": "node index.js"
   },
   "author": "Luis Coelho",
   "license": "ISC",
@@ -16,7 +16,7 @@
     "@types/express": "^4.17.14",
     "@types/node": "^18.7.18",
     "prisma": "^4.3.1",
-    "ts-node-dev": "^2.0.0",
+    "tsx": "^3.9.0",
     "typescript": "^4.8.3"
   },
   "dependencies": {

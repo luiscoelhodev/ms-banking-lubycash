@@ -1,26 +1,42 @@
 import { prisma } from "../PrismaClient";
 import { Request, Response } from "express";
-import { Customer, Status, Transfer } from "@prisma/client";
+import { Customer, Status } from "@prisma/client";
+import { userToCustomerSchema } from '../validators/UsersControllerValidator'
 
 //to do: create validators
 
-type UserWhoWantsToBeCustomer = {
-  full_name: string
-  email: string
-  phone: string
-  cpf_number: string
-  address: string
-  city: string
-  state: string
-  zipcode: string
-  current_balance: number
-  average_salary: number
-  status: Status
-}
+// type UserWhoWantsToBeCustomer = {
+//   full_name: string
+//   email: string
+//   phone: string
+//   cpf_number: string
+//   address: string
+//   city: string
+//   state: string
+//   zipcode: string
+//   current_balance: number
+//   average_salary: number
+//   status: Status
+// }
 
 export default class CustomersController {
   public async validateUserToBecomeCustomer(request: Request, response: Response) {
-    const user: UserWhoWantsToBeCustomer = request.body
+    const user = request.body
+
+    try {
+      await userToCustomerSchema.validateAsync(user, { abortEarly: false })
+    } catch (error: any) {
+      return response.status(422).send({ message: 'Validation error.', error: error.details})
+    }
+
+    try {
+      const hasUserAlreadyRequested = await prisma.customer.findFirstOrThrow({ where: { cpf: user.cpf_number}})
+      if (hasUserAlreadyRequested) {
+        return response.status(406).send({ error: 'You have already requested to become a user! '})
+      }
+    } catch (error) {
+      return response.status(400).send({ message: 'Error in querying DB to check if user has already request.', error: error })
+    }
     
     user.average_salary >= 500 ?
     [user.status, user.current_balance] = [Status.Accepted, 200] :
@@ -44,11 +60,7 @@ export default class CustomersController {
     } catch (error) {
       return response.status(404).send({ message: 'Error in finding this customer created.', error: error })
     }
-
     return response.status(201).send({ customerFound })
-
-    // Use kafka producer function to send user info (email) and status in a message
-    // Use axios here to send lubycash-adonis back the info if user has become a customer because their role may have to change
   }
 
   public async listAllCustomers(request: Request, response: Response) {

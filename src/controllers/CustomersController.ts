@@ -1,6 +1,6 @@
 import { prisma } from "../PrismaClient";
 import { Request, Response } from "express";
-import { Customer, Status } from "@prisma/client";
+import { Customer, Status, Transfer } from "@prisma/client";
 
 //to do: create validators
 
@@ -88,20 +88,25 @@ export default class CustomersController {
   public async getCustomersBankStatement(request: Request, response: Response){
     const { from, to } = request.body
     const customerCPF  = request.params.cpf
+    let customerFound: Customer
     
     try {
-      await prisma.customer.findUniqueOrThrow({ where: { cpf: customerCPF }})
+      customerFound = await prisma.customer.findUniqueOrThrow({ where: { cpf: customerCPF }})
     } catch (error) {
-      return response.status(404).send({ message: 'User not found.', error: error })
+      return response.status(404).send({ message: 'Customer not found.', error: error })
     }
 
     if (from && to) {
       try {
-        const transfers = await prisma.transfer.findMany({where: { AND: {
-          receiver: { is: { cpf: customerCPF }},
-          sender: { is: { cpf: customerCPF }}, 
-          createdAt: { gte: new Date(from), lte: new Date(to)}
-        }}})
+        const transfers = await prisma.transfer.findMany({
+          where: { 
+            OR: [
+              {sender: customerFound},
+              {receiver: customerFound}
+            ],
+            createdAt: { gte: new Date(from), lte: new Date(to)}
+          }
+        })
         return response.status(200).send({ transfers })
       } catch (error) {
         return response.status(400).send({ message: 'Error in retrieving transfers from this customer.', error: error })
@@ -109,15 +114,51 @@ export default class CustomersController {
     }
 
     try {
-      const transfers = await prisma.transfer.findMany({ where: {
-        AND: {
-          receiver: { is: { cpf: customerCPF }},
-          sender: { is: { cpf: customerCPF }}, 
+      const transfers = await prisma.transfer.findMany({
+        where: { 
+          OR: [
+            { sender: customerFound},
+            { receiver: customerFound}
+          ]
         }
-      }})
+      })
       return response.status(200).send({ transfers })
     } catch (error) {
       return response.status(400).send({ message: 'Error in retrieving transfers from this customer.', error: error })
     }
+  }
+
+  public async makeTransferFromSenderToReceiver(request: Request, response: Response) {
+    const { amount, message, senderCPF, receiverCPF } = request.body
+    let senderFound: Customer
+    let receiverFound: Customer
+    try {
+      senderFound = await prisma.customer.findUniqueOrThrow({where: { cpf: senderCPF }})
+    } catch (error) {
+      return response.status(404).send({ message: 'Sender not found.', error: error })
+    }
+    try {
+      receiverFound = await prisma.customer.findUniqueOrThrow({where: { cpf: receiverCPF}})
+    } catch (error) {
+      return response.status(404).send({ message: 'Receiver not found.', error: error })
+    }
+
+    if (amount > senderFound.balance) {
+      return response.status(400).send({ error: 'Customer does not have enough money for this transfer!' })
+    }
+
+    try {
+      await prisma.transfer.create({data: {
+        amount: amount,
+        message: message,
+        sender_id: senderFound.id,
+        receiver_id: receiverFound.id,
+      }})
+      await prisma.customer.update({ where: { cpf: senderFound.cpf }, data: { balance: { decrement: amount }}})
+      await prisma.customer.update({where: { cpf: receiverFound.cpf}, data: { balance: { increment: amount }}})
+    } catch (error) {
+      return response.status(400).send({ message: 'Error in making transfer.', error: error })
+    }
+    return response.status(200).send({ message: 'Transfer completed successfully!' })
   }
 }

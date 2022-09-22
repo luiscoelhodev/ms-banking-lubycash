@@ -10,6 +10,7 @@ router.get('/hello', (_request: Request, response: Response) => {
 router.post('/become-a-customer', customersController.validateUserToBecomeCustomer)
 router.get('/customers/all', customersController.listAllCustomers)
 router.get('/customers/bank-statement/:cpf', customersController.getCustomersBankStatement)
+router.post('/customers/transfer', customersController.makeTransferFromSenderToReceiver)
 
 
 export { router }

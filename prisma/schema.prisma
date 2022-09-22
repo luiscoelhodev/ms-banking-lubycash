@@ -10,12 +10,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Status {
+  Accepted
+  Rejected
+}
+
 model Customer {
-  id                Int        @id @default(autoincrement())
-  secureId          String     @default(uuid()) @map("secure_id")
+  id                String     @id @default(uuid())
   cpf               String     @unique
-  balance           Float      @map("current_balance")
-  status            String
+  balance           Decimal    @map("current_balance") @db.Decimal(12, 2)
+  status            Status
   createdAt         DateTime   @default(now()) @map("created_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
   transfersMade     Transfer[] @relation(name: "TransfersMade")
@@ -28,9 +32,9 @@ model Transfer {
   id          String   @id @default(uuid())
   sender      Customer @relation(name: "TransfersMade", fields: [sender_id], references: [id])
   receiver    Customer @relation(name: "TransfersReceived", fields: [receiver_id], references: [id])
-  sender_id   Int
-  receiver_id Int
-  amount      Float
+  sender_id   String
+  receiver_id String
+  amount      Decimal @db.Decimal(6, 2)
   message     String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")

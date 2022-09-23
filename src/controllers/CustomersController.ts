@@ -13,15 +13,11 @@ export default class CustomersController {
       return response.status(422).send({ message: 'Validation error.', error: error.details})
     }
 
-    try {
-      const hasUserAlreadyRequested = await prisma.customer.findFirstOrThrow({ where: { cpf: user.cpf_number}})
-      if (hasUserAlreadyRequested) {
-        return response.status(406).send({ error: 'You have already requested to become a user! '})
-      }
-    } catch (error) {
-      return response.status(400).send({ message: 'Error in querying DB to check if user has already request.', error: error })
+    const hasUserAlreadyRequested = await prisma.customer.findUnique({ where: { cpf: user.cpf_number }})
+    if (hasUserAlreadyRequested?.cpf) {
+      return response.status(406).send({ error: 'You have already requested to become a user!'})
     }
-    
+
     user.average_salary >= 500 ?
     [user.status, user.current_balance] = [Status.Accepted, 200] :
     [user.status, user.current_balance] = [Status.Rejected, 0]
@@ -45,6 +41,7 @@ export default class CustomersController {
       return response.status(404).send({ message: 'Error in finding this customer created.', error: error })
     }
     return response.status(201).send({ customerFound })
+
   }
 
   public async listAllCustomers(request: Request, response: Response) {

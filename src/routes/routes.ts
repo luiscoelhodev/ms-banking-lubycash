@@ -9,7 +9,7 @@ router.get('/hello', (_request: Request, response: Response) => {
   return response.status(200).send({ hello: 'world'})
 })
 
-router.post('/become-a-customer', customersController.validateUserToBecomeCustomer)
+router.post('/customers/become-a-customer', customersController.validateUserToBecomeCustomer)
 router.get('/customers/all', customersController.listAllCustomers)
 router.get('/customers/bank-statement/:cpf', customersController.getCustomerBankStatement)
 router.post('/transfers/make', transfersController.makeTransferFromSenderToReceiver)

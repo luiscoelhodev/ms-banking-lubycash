@@ -1,7 +1,7 @@
 import { prisma } from "../PrismaClient";
 import { Request, Response } from "express";
 import { Customer, Status } from "@prisma/client";
-import { userToCustomerSchema } from '../validators/UsersControllerValidator'
+import { listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
 
 export default class CustomersController {
   public async validateUserToBecomeCustomer(request: Request, response: Response) {
@@ -48,37 +48,33 @@ export default class CustomersController {
   }
 
   public async listAllCustomers(request: Request, response: Response) {
-    const { status, from, to } = request.body
+    const {status, from, to} = request.body
+    try {
+      await listAllCustomersSchema.validateAsync({ status, from, to }, { abortEarly: false })
+    } catch (error) {
+      return response.status(422).send({ message: 'Validation error.', error: error})
+    }
 
     let customers: Customer[]
-    if (status && !from && !to) {
-      try {
-        customers = await prisma.customer.findMany({where: {
-          status: status
-        }})
-        return response.status(200).send({ customers })
-      } catch (error) {
-        return response.status(400).send({ message: 'Error in listing all customers.', error: error })
-      }  
-    }
-    if (!status && from && to) {
-      try {
-        customers = await prisma.customer.findMany({where: {
-          createdAt: {gte: new Date(from), lte: new Date(to)}, 
+    try {
+      if (status && !from && !to) {
+        customers = await prisma.customer.findMany({
+          where: {
+            status: status
           }
         })
-        return response.status(200).send({ customers })
-      } catch (error) {
-        return response.status(400).send({ message: 'Error in listing all customers.', error: error })  
       }
-    }
-
-    try {
+      if (!status && from && to) {
+        customers = await prisma.customer.findMany({where: {
+          createdAt: {gte: new Date(from), lte: new Date(to)}, 
+        }
+      })
+      }
       customers = await prisma.customer.findMany()
-      return response.status(200).send({ customers })
     } catch (error) {
       return response.status(400).send({ message: 'Error in listing all customers.', error: error })
     }
+    return response.status(200).send({ customers })
   }
 
   public async getCustomerBankStatement(request: Request, response: Response){

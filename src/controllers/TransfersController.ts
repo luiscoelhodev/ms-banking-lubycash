@@ -1,11 +1,23 @@
 import { Customer } from "@prisma/client"
 import { Request, Response } from "express"
 import { prisma } from "../PrismaClient"
+import { transferSchema } from "../validators/TransfersControllerValidator"
 
 export default class TransfersController {
 
   public async makeTransferFromSenderToReceiver(request: Request, response: Response) {
     const { amount, message, senderCPF, receiverCPF } = request.body
+
+    if (senderCPF === receiverCPF) {
+      return response.status(400).send({ error: 'senderCPF and receiverCPF cannot be equal!' })
+    }
+
+    try {
+      await transferSchema.validateAsync({amount, message, senderCPF, receiverCPF}, { abortEarly: false })
+    } catch (error) {
+      return response.status(422).send({ message: 'Validation error.', error: error })
+    }
+
     let senderFound: Customer
     let receiverFound: Customer
     try {

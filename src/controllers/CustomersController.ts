@@ -1,7 +1,7 @@
 import { prisma } from "../PrismaClient";
 import { Request, Response } from "express";
 import { Customer, Status } from "@prisma/client";
-import { listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
+import { getCustomerBankStatementSchema, listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
 
 export default class CustomersController {
   public async validateUserToBecomeCustomer(request: Request, response: Response) {
@@ -78,6 +78,13 @@ export default class CustomersController {
     const { from, to } = request.body
     const customerCPF  = request.params.cpf
     let customerFound: Customer
+
+    try {
+      await getCustomerBankStatementSchema.validateAsync({ from, to }, { abortEarly: false })
+      if (customerCPF.match(/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/) === null) throw new Error('CPF is invalid.')
+    } catch (error) {
+      return response.status(422).send({ message: 'Validation error.', error: error})
+    }
     
     try {
       customerFound = await prisma.customer.findUniqueOrThrow({ where: { cpf: customerCPF }})

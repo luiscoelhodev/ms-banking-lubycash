@@ -1,6 +1,7 @@
 import { Customer } from "@prisma/client"
 import { Request, Response } from "express"
-import { prisma } from "../PrismaClient"
+import { TransferErrors } from "../helpers/ErrorsEnums"
+import { prisma } from "../helpers/PrismaClient"
 import { transferSchema } from "../validators/TransfersControllerValidator"
 
 export default class TransfersController {
@@ -9,13 +10,13 @@ export default class TransfersController {
     const { amount, message, senderCPF, receiverCPF } = request.body
 
     if (senderCPF === receiverCPF) {
-      return response.status(400).send({ error: 'senderCPF and receiverCPF cannot be equal!' })
+      return response.send({ error: TransferErrors.equalCpfs })
     }
 
     try {
       await transferSchema.validateAsync({amount, message, senderCPF, receiverCPF}, { abortEarly: false })
     } catch (error) {
-      return response.status(422).send({ message: 'Validation error.', error: error })
+      return response.send({ error: TransferErrors.validation })
     }
 
     let senderFound: Customer
@@ -23,16 +24,17 @@ export default class TransfersController {
     try {
       senderFound = await prisma.customer.findUniqueOrThrow({where: { cpf: senderCPF }})
     } catch (error) {
-      return response.status(404).send({ message: 'Sender not found.', error: error })
+      return response.send({ error: TransferErrors.senderNotFound })
     }
+
     try {
       receiverFound = await prisma.customer.findUniqueOrThrow({where: { cpf: receiverCPF}})
     } catch (error) {
-      return response.status(404).send({ message: 'Receiver not found.', error: error })
+      return response.send({ error: TransferErrors.receiverNotFound })
     }
 
     if (amount > senderFound.balance) {
-      return response.status(400).send({ error: 'Customer does not have enough money for this transfer!' })
+      return response.send({ error: TransferErrors.notEnoughMoney })
     }
 
     try {
@@ -45,7 +47,7 @@ export default class TransfersController {
       await prisma.customer.update({ where: { cpf: senderFound.cpf }, data: { balance: { decrement: amount }}})
       await prisma.customer.update({where: { cpf: receiverFound.cpf}, data: { balance: { increment: amount }}})
     } catch (error) {
-      return response.status(400).send({ message: 'Error in making transfer.', error: error })
+      return response.send({ error: TransferErrors.dbInsertion })
     }
     return response.status(200).send({ message: 'Transfer completed successfully!' })
   }

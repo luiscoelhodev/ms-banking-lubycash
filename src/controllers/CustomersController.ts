@@ -1,6 +1,6 @@
-import { prisma } from "../PrismaClient";
+import { prisma } from "../helpers/PrismaClient";
 import { Request, Response } from "express";
-import { Customer } from "@prisma/client";
+import { Customer, Status } from "@prisma/client";
 import { getCustomerBankStatementSchema, listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
 
 export default class CustomersController {

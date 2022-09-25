@@ -7,7 +7,7 @@ const userToCustomerSchema = Joi.object({
 })
 
 const listAllCustomersSchema = Joi.object({
-  status: Joi.object(Status).optional(),
+  status: Joi.string().optional().valid(`${Status.Accepted}`, `${Status.Rejected}`),
   from: Joi.date().optional(),
   to: Joi.date().optional()
 })

@@ -1,6 +1,6 @@
 import { prisma } from "../PrismaClient";
 import { Request, Response } from "express";
-import { Customer, Status } from "@prisma/client";
+import { Customer } from "@prisma/client";
 import { getCustomerBankStatementSchema, listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
 
 export default class CustomersController {
@@ -49,7 +49,7 @@ export default class CustomersController {
     try {
       await listAllCustomersSchema.validateAsync({ status, from, to }, { abortEarly: false })
     } catch (error) {
-      return response.status(422).send({ message: 'Validation error.', error: error})
+      return response.status(422).send({ message: 'Validation error.', error: error })
     }
 
     let customers: Customer[]
@@ -61,13 +61,12 @@ export default class CustomersController {
           }
         })
       }
-      if (!status && from && to) {
+      else if (!status && from && to) {
         customers = await prisma.customer.findMany({where: {
           createdAt: {gte: new Date(from), lte: new Date(to)}, 
         }
       })
-      }
-      customers = await prisma.customer.findMany()
+      } else customers = await prisma.customer.findMany()
     } catch (error) {
       return response.status(400).send({ message: 'Error in listing all customers.', error: error })
     }

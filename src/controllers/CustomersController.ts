@@ -2,6 +2,7 @@ import { prisma } from "../helpers/PrismaClient";
 import { Request, Response } from "express";
 import { Customer, Status } from "@prisma/client";
 import { getCustomerBankStatementSchema, listAllCustomersSchema, userToCustomerSchema } from '../validators/CustomersControllerValidator'
+import { BecomeACustomerErrorsEnum, GetCustomerBankStatementErrorsEnum, ListAllCustomersErrorsEnum } from "../helpers/ErrorsEnums";
 
 export default class CustomersController {
   public async validateUserToBecomeCustomer(request: Request, response: Response) {
@@ -9,14 +10,12 @@ export default class CustomersController {
 
     try {
       await userToCustomerSchema.validateAsync(user, { abortEarly: false })
-    } catch (error: any) {
-      return response.status(422).send({ message: 'Validation error.', error: error.details})
+    } catch (error) {
+      return response.send({ error: BecomeACustomerErrorsEnum.validation })
     }
 
     const hasUserAlreadyRequested = await prisma.customer.findUnique({ where: { cpf: user.cpf_number }})
-    if (hasUserAlreadyRequested?.cpf) {
-      return response.status(406).send({ error: 'You have already requested to become a user!'})
-    }
+    if (hasUserAlreadyRequested) return response.send({ error: BecomeACustomerErrorsEnum.hasAlreadyRequested })
 
     user.average_salary >= 500 ?
     [user.status, user.current_balance] = [Status.Accepted, 200] :
@@ -31,14 +30,14 @@ export default class CustomersController {
         }
       }) 
     } catch (error) {
-      return response.status(400).send({ message: 'Error in storing customer.', error: error })
+      return response.send({ error: BecomeACustomerErrorsEnum.dbInsertionError })
     }
 
     let customerFound: Customer
     try {
       customerFound = await prisma.customer.findUniqueOrThrow({where: {cpf: user.cpf_number}})
     } catch (error) {
-      return response.status(404).send({ message: 'Error in finding this customer created.', error: error })
+      return response.send({ error: BecomeACustomerErrorsEnum.dbSelect })
     }
     return response.status(201).send({ customerFound })
 
@@ -49,7 +48,7 @@ export default class CustomersController {
     try {
       await listAllCustomersSchema.validateAsync({ status, from, to }, { abortEarly: false })
     } catch (error) {
-      return response.status(422).send({ message: 'Validation error.', error: error })
+      return response.send({ error: ListAllCustomersErrorsEnum.validation })
     }
 
     let customers: Customer[]
@@ -68,7 +67,7 @@ export default class CustomersController {
       })
       } else customers = await prisma.customer.findMany()
     } catch (error) {
-      return response.status(400).send({ message: 'Error in listing all customers.', error: error })
+      return response.send({ error: ListAllCustomersErrorsEnum.dbSelect })
     }
     return response.status(200).send({ customers })
   }
@@ -82,13 +81,13 @@ export default class CustomersController {
       await getCustomerBankStatementSchema.validateAsync({ from, to }, { abortEarly: false })
       if (customerCPF.match(/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/) === null) throw new Error('CPF is invalid.')
     } catch (error) {
-      return response.status(422).send({ message: 'Validation error.', error: error})
+      return response.send({ error: GetCustomerBankStatementErrorsEnum.validation})
     }
     
     try {
       customerFound = await prisma.customer.findUniqueOrThrow({ where: { cpf: customerCPF }})
     } catch (error) {
-      return response.status(404).send({ message: 'Customer not found.', error: error })
+      return response.send({ error: GetCustomerBankStatementErrorsEnum.notFound })
     }
 
     if (from && to) {
@@ -104,7 +103,7 @@ export default class CustomersController {
         })
         return response.status(200).send({ transfers })
       } catch (error) {
-        return response.status(400).send({ message: 'Error in retrieving transfers from this customer.', error: error })
+        return response.send({ error: GetCustomerBankStatementErrorsEnum.dbSelect })
       }
     }
 
@@ -119,7 +118,7 @@ export default class CustomersController {
       })
       return response.status(200).send({ transfers })
     } catch (error) {
-      return response.status(400).send({ message: 'Error in retrieving transfers from this customer.', error: error })
+      return response.status(400).send({ error: GetCustomerBankStatementErrorsEnum.dbSelect })
     }
   }
 }

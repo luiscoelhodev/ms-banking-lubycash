@@ -7,8 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
     "build": "etsc",
-    "start": "node index.js",
-    "docker:run" : "npm run build && docker build -t ms-banking-lubycash . && docker run --network=lubycash ms-banking-lubycash"
+    "start": "node index.js"
   },
   "author": "Luis Coelho",
   "license": "ISC",

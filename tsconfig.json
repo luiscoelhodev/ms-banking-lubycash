@@ -1,17 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "lib": ["es6", "ESNext"],
-    "rootDir": "src",
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "allowJs": true,
-    "outDir": "dist",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true, 
     "sourceMap": true,
+    "outDir": "dist",
     "strict": true,
-  }
+    "lib": ["esnext"],
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*", "prisma/**/*"]
 }

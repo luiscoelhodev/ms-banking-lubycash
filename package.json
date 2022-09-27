@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx tsx watch src/index.ts",
-    "testDev": "npx tsx watch ./src/testQueries.ts",
-    "build": "npx tsc -b",
-    "start": "node index.js"
+    "dev": "tsx watch src/index.ts",
+    "build": "etsc",
+    "start": "node index.js",
+    "docker:run" : "npm run build && docker build -t ms-banking-lubycash . && docker run --network=lubycash ms-banking-lubycash"
   },
   "author": "Luis Coelho",
   "license": "ISC",
@@ -22,6 +22,7 @@
   "dependencies": {
     "@prisma/client": "^4.3.1",
     "dotenv": "^16.0.2",
+    "esbuild-node-tsc": "^2.0.4",
     "express": "^4.18.1",
     "joi": "^17.6.1"
   }

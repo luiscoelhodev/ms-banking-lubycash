@@ -1,0 +1,17 @@
+version: '3'
+networks:
+  lubycash:
+    external: true
+services:
+ 
+  ms-banking-lubycash:
+    container_name: ms-banking-lubycash
+    build:
+      context: .
+    ports:
+      - '3000:3000'
+    networks:
+      - lubycash
+    environment:
+      MS_BANKING_URL: http://ms-banking-lubycash:3000
+      DATABASE_URL: 'mysql://root:root@mysql:3306/banking_db'

@@ -73,7 +73,7 @@ export default class CustomersController {
   }
 
   public async getCustomerBankStatement(request: Request, response: Response){
-    const { from, to } = request.body
+    const { from, to } = request.query
     const customerCPF  = request.params.cpf
     let customerFound: Customer
 
@@ -98,7 +98,7 @@ export default class CustomersController {
               {sender: customerFound},
               {receiver: customerFound}
             ],
-            createdAt: { gte: new Date(from), lte: new Date(to)}
+            createdAt: { gte: new Date(from.toString()), lte: new Date(to.toString())}
           }
         })
         return response.status(200).send({ transfers })

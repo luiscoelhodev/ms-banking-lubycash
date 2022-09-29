@@ -4,11 +4,11 @@ WORKDIR /usr/app
 
 COPY package*.json ./
 
-RUN npm install
-
 COPY ./dist .
 
-COPY ./prisma/ .
+COPY ./prisma .
+
+RUN npm install
 
 EXPOSE 3000
 
